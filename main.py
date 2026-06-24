@@ -12,7 +12,6 @@ def main():
     print(f"-> Nós disponíveis na rede ({len(nos_da_rede)}):", nos_da_rede)
 
     print("\n2. Iniciando a Central de Análise...")
-    # AQUI ESTÁ A LINHA QUE HAVIA SUMIDO! 👇
     engine = AnalysisEngine(model)
 
     print("\n3. Executando cálculo de Atratores...")
@@ -28,7 +27,6 @@ def main():
     # Estado Final: Célula diferenciada/mesenquimal (Pluripotência OFF, Mesenquimais ON)
     estado_final = {"v___Oct4_Sox2": 0, "Zeb1": 1, "Snai1": 1}
 
-    # Agora sim, o 'engine' existe e pode trabalhar!
     report_reach = engine.compute_reachability(
         source=estado_inicial, 
         target=estado_final, 
