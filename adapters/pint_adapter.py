@@ -59,7 +59,6 @@ class PintAdapter(BooleanBackendAdapter):
         }
 
     def compute_reachability(self, source: Dict[str, int], target: Dict[str, int], **kwargs) -> Dict[str, Any]:
-        # Em breve: Onde o Pint realmente brilha!
         return {
             "tool": "pint",
             "type": "reachability",
