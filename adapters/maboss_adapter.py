@@ -94,9 +94,53 @@ class MaBoSSAdapter(BooleanBackendAdapter):
         }
 
     def compute_reachability(self, source: Dict[str, int], target: Dict[str, int], **kwargs) -> Dict[str, Any]:
-        return {
-            "tool": "maboss",
-            "type": "reachability",
-            "reachable": None,
-            "path": []
-        }
+        import traceback
+
+        try:
+            # O Pulo do Gato: Não copiamos a simulação. 
+            # Criamos uma nova do zero usando a nossa própria função nativa do adapter!
+            sim = self.export_model()
+
+            # Configurando o Estado Inicial (100% de chance de estar na condição 'source')
+            for node in list(sim.network.keys()):
+                if node in source:
+                    prob_1 = source[node]
+                    prob_0 = 1 - prob_1
+                    sim.network.set_istate(node, [prob_0, prob_1])
+
+            # Executando a Cadeia de Markov contínua no tempo
+            res = sim.run()
+
+            # Extraindo a Trajetória de Probabilidades (Dataframe do Pandas)
+            df = res.get_states_probtraj()
+
+            # Mapeia quais nós deveriam estar ativos no estado alvo
+            target_active_set = set([k for k, v in target.items() if v == 1])
+
+            max_prob = 0.0
+            # Varre as colunas do MaBoSS para achar a que tem exatamente os mesmos nós, independente da ordem
+            for col_name in df.columns:
+                col_nodes = set() if col_name == "<nil>" else set(col_name.split(" -- "))
+                
+                if col_nodes == target_active_set:
+                    max_prob = float(df[col_name].max())
+                    break
+
+            # Consideramos alcançável se a probabilidade for maior que um ruído estatístico (ex: 0.1%)
+            is_reachable = max_prob > 0.001
+
+            return {
+                "tool": "maboss",
+                "type": "reachability",
+                "reachable": is_reachable,
+                "max_probability": round(max_prob, 4), 
+                "path": []
+            }
+
+        except Exception as e:
+            return {
+                "tool": "maboss",
+                "type": "reachability",
+                "reachable": None,
+                "error": traceback.format_exc()
+            }
