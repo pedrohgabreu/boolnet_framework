@@ -64,7 +64,6 @@ class MPBNAdapter(BooleanBackendAdapter):
 
     def compute_reachability(self, source: Dict[str, int], target: Dict[str, int], **kwargs) -> Dict[str, Any]:
         try:
-            # O MPBN tem a matemática de alcançabilidade permissiva nativa e otimizada!
             is_reachable = self.mb.reachability(source, target)
             
             return {
