@@ -1,0 +1,12 @@
+# --- Backends de Redes Booleanas ---
+pyboolnet
+maboss
+bonesis
+
+# Nota: Pint geralmente roda como um executável via linha de comando.
+# Se você estiver usando algum wrapper Python específico para ele, 
+# o nome do pacote entra aqui (ex: pypint).
+
+# --- Utilidades para Modelagem e Manipulação ---
+networkx      # Essencial para lidar com topologia de grafos nos adapters
+pyyaml        # Muito útil se você decidir exportar/importar os modelos em YAML depois

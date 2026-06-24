@@ -1,0 +1,18 @@
+# Ambientes Virtuais
+venv/
+venv_linux/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Arquivos temporários gerados pelas engines
+*.bnd
+*.cfg
+*.bnet
+/tmp/
+
+# Configurações de IDE (VS Code, etc)
+.vscode/
+.idea/
