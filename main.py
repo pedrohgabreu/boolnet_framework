@@ -3,50 +3,46 @@ from core.model import BooleanNetworkModel
 from analysis.engine import AnalysisEngine
 
 def main():
-    print("1. Instanciando o Modelo Central...")
-    model = BooleanNetworkModel("Cell_Fate_Model")
-    
-    model.load_from_dict({
-        "Sox2": "Oct4",
-        "Oct4": "Sox2 & Nanog",
-        "Nanog": "Sox2"
-    })
+    print("1. Lendo modelo direto do GINsim...")
+    model = BooleanNetworkModel()
+    # Lendo o arquivo compactado corretamente:
+    model.load_from_ginsim("/mnt/c/Users/Pedro/Documents/boolnet_framework/1.redesimplesdefinitiva.zginml.zip")
 
-    print("2. Iniciando a Central de Análise...")
+    nos_da_rede = model.get_nodes()
+    print(f"-> Nós disponíveis na rede ({len(nos_da_rede)}):", nos_da_rede)
+
+    print("\n2. Iniciando a Central de Análise...")
+    # AQUI ESTÁ A LINHA QUE HAVIA SUMIDO! 👇
     engine = AnalysisEngine(model)
-    
-    # ---------------------------------------------------------
-    # TESTE 1: Atratores (como já estava funcionando)
-    # ---------------------------------------------------------
-    print("\n3. Executando cálculo de Atratores...")
-    report_attractors = engine.compute_attractors(tools=["pyboolnet", "maboss"], update_mode="synchronous")
-    
-    for tool_name, result in report_attractors.items():
-        if result["status"] == "success":
-            print(f"[{tool_name.upper()}] Atratores encontrados com sucesso.")
-        else:
-            print(f"[{tool_name.upper()}] Falha: {result['message']}")
 
-    # ---------------------------------------------------------
-    # TESTE 2: Alcançabilidade (Reachability)
-    # ---------------------------------------------------------
+    print("\n3. Executando cálculo de Atratores...")
+    # Opcional: Se quiser calcular os atratores dessa rede imensa, basta descomentar as duas linhas abaixo
+    # report_attr = engine.compute_attractors(tools=["pyboolnet", "maboss"])
+    # print("Atratores calculados!")
+
     print("\n4. Executando análise de Alcançabilidade (Reachability)...")
     
-    estado_inicial = {"Sox2": 1, "Oct4": 0, "Nanog": 0}
-    estado_final = {"Sox2": 1, "Oct4": 1, "Nanog": 1}
-    
+    # Estado Inicial: Fator de pluripotência ON, Fatores mesenquimais OFF
+    estado_inicial = {"v___Oct4_Sox2": 1, "Zeb1": 0, "Snai1": 0}
+
+    # Estado Final: Célula diferenciada/mesenquimal (Pluripotência OFF, Mesenquimais ON)
+    estado_final = {"v___Oct4_Sox2": 0, "Zeb1": 1, "Snai1": 1}
+
+    # Agora sim, o 'engine' existe e pode trabalhar!
     report_reach = engine.compute_reachability(
         source=estado_inicial, 
         target=estado_final, 
-        tools=["pyboolnet", "maboss"]
+        tools=["pyboolnet", "maboss", "mpbn"]
     )
 
-    for tool_name, result in report_reach.items():
-        print(f"\n=== {tool_name.upper()} (Reachability) ===")
-        if result["status"] == "success":
-            print(json.dumps(result["data"], indent=2))
-        else:
-            print(f"Falha: {result['message']}")
+    print("\n=== PYBOOLNET (Reachability) ===")
+    print(json.dumps(report_reach.get("pyboolnet", {}), indent=2))
+
+    print("\n=== MABOSS (Reachability) ===")
+    print(json.dumps(report_reach.get("maboss", {}), indent=2))
+
+    print("\n=== MPBN (Reachability) ===")
+    print(json.dumps(report_reach.get("mpbn", {}), indent=2))
 
 if __name__ == "__main__":
     main()

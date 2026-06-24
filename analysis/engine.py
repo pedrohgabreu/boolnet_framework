@@ -5,13 +5,15 @@ from core.model import BooleanNetworkModel
 from adapters.pyboolnet_adapter import PyBoolNetAdapter
 from adapters.maboss_adapter import MaBoSSAdapter
 # from adapters.pint_adapter import PintAdapter
+from adapters.mpbn_adapter import MPBNAdapter
 
 # Dicionário que mapeia o nome da ferramenta para a sua respectiva classe Adapter
 REGISTERED_BACKENDS = {
     "pyboolnet": PyBoolNetAdapter,
     "maboss": MaBoSSAdapter,
-    # "pint": PintAdapter
+    "mpbn": MPBNAdapter
 }
+    
 
 class AnalysisEngine:
     """
