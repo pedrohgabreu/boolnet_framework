@@ -6,8 +6,7 @@ def main():
     print("1. Lendo modelo direto do GINsim...")
     model = BooleanNetworkModel()
     # Lendo o arquivo compactado corretamente:
-    model.load_from_ginsim("/mnt/c/Users/Pedro/Documents/boolnet_framework/1.redesimplesdefinitiva.zginml.zip")
-
+    model.load_from_ginsim("1.redesimplesdefinitiva.zginml.zip")
     nos_da_rede = model.get_nodes()
     print(f"-> Nós disponíveis na rede ({len(nos_da_rede)}):", nos_da_rede)
 
