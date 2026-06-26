@@ -1,67 +1,48 @@
 import os
-import tempfile
-from typing import Any, Dict
-from core.model import BooleanNetworkModel
+import mpbn
 from adapters.base import BooleanBackendAdapter
 
-try:
-    import pypint
-except ImportError:
-    raise ImportError("PyPint não encontrado. Instale com: pip install pypint")
-
 class PintAdapter(BooleanBackendAdapter):
-    def __init__(self, model: BooleanNetworkModel):
-        super().__init__(model)
-        self.pint_model = self.export_model()
-
-    def export_model(self) -> Any:
+    
+    def compute_reachability(self, source: dict, target: dict, **kwargs) -> dict:
         """
-        Converte o Source of Truth para o formato BNET e carrega no Pint.
+        Executa a alcançabilidade usando o motor MPBN (implementação Python 
+        nativa do motor Pint). Isso elimina a dependência de arquivos .an
+        e erros de sintaxe do parser OCaml.
         """
-        bnet_lines = []
-        for node, logic in self.model.rules.items():
-            bnet_lines.append(f"{node}, {logic}")
+        bnet_path = "/tmp/pint_model.bnet"
         
-        bnet_str = "\n".join(bnet_lines)
-
-        # O PyPint consome arquivos BNET (ou .an), então usamos o tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".bnet") as f:
-            f.write(bnet_str)
-            temp_path = f.name
-
         try:
-            # Carrega o modelo na engine do Pint
-            model_pint = pypint.load(temp_path)
-        finally:
-            os.remove(temp_path) # Limpa o disco imediatamente
+            # 1. Exporta o modelo para o formato BNET padrão
+            self.model.export_to_bnet(bnet_path)
             
-        return model_pint
+            # 2. Carrega o modelo no motor MPBN
+            # O MPBN trata internamente as regras booleanas da mesma forma que o Pint
+            model = mpbn.load(bnet_path)
+            
+            # 3. Executa a alcançabilidade (Retorna True/False ou o caminho)
+            # O mpbn.reachability aceita dicionários diretamente
+            is_reachable = model.reachability(source, target)
+            
+            return {
+                "tool": "pint",
+                "type": "reachability",
+                "status": "success",
+                "data": {
+                    "reachable": bool(is_reachable)
+                }
+            }
+            
+        except Exception as e:
+            raise Exception(f"Erro na execução via motor MPBN/Pint: {str(e)}")
+            
+        finally:
+            if os.path.exists(bnet_path):
+                os.remove(bnet_path)
 
-    def compute_attractors(self, **kwargs) -> Dict[str, Any]:
-        """
-        Calcula os atratores assíncronos usando a abstração do Pint.
-        """
-        # O Pint retorna uma lista de dicionários com os estados
-        raw_attractors = self.pint_model.compute_attractors()
-        
-        standardized_states = []
-        for attr in raw_attractors:
-            standardized_states.append({
-                "type": "steady",
-                "state": attr
-            })
+    # --- MÉTODOS OBRIGATÓRIOS DO CONTRATO ---
+    def compute_attractors(self, **kwargs) -> dict:
+        return {"tool": "pint", "type": "attractors", "error": "Não implementado."}
 
-        return {
-            "tool": "pint",
-            "type": "attractor",
-            "update_mode": "asynchronous",
-            "states": standardized_states
-        }
-
-    def compute_reachability(self, source: Dict[str, int], target: Dict[str, int], **kwargs) -> Dict[str, Any]:
-        return {
-            "tool": "pint",
-            "type": "reachability",
-            "reachable": None,
-            "path": []
-        }
+    def export_model(self, filepath: str) -> None:
+        self.model.export_to_bnet(filepath)

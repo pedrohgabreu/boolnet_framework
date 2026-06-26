@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libncurses5 \
     git \
     ca-certificates \
+    wget \
+    xz-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -22,7 +24,7 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libreadline.so /usr/lib/x86_64-linux-gnu/lib
 WORKDIR /app
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir pyboolnet maboss mpbn pandas
+    pip install --no-cache-dir pyboolnet maboss mpbn pandas pypint
 
 # Compilação nativa do núcleo em C++ do MaBoSS e envio para o PATH global do Linux
 RUN git clone --depth 1 https://github.com/maboss-bkmc/MaBoSS-env-2.0.git /tmp/maboss && \
@@ -30,5 +32,12 @@ RUN git clone --depth 1 https://github.com/maboss-bkmc/MaBoSS-env-2.0.git /tmp/m
     make && \
     cp MaBoSS /usr/local/bin/ && \
     rm -rf /tmp/maboss
+
+# Download dos binários estáticos do Pint (.txz) e envio via busca recursiva para o PATH global
+RUN wget https://github.com/pauleve/pint/releases/download/2019-05-24/pint_2019-05-24_linux-x86_64.txz -O /tmp/pint.txz && \
+    mkdir -p /tmp/pint && \
+    tar -xf /tmp/pint.txz -C /tmp/pint && \
+    find /tmp/pint -name "pint*" -type f -executable -exec cp {} /usr/local/bin/ \; && \
+    rm -rf /tmp/pint /tmp/pint.txz
 
 CMD ["python", "main.py"]

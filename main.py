@@ -29,7 +29,7 @@ def main():
     report_reach = engine.compute_reachability(
         source=estado_inicial, 
         target=estado_final, 
-        tools=["pyboolnet", "maboss", "mpbn"]
+        tools=["pyboolnet", "maboss", "mpbn", "pint"]
     )
 
     print("\n=== PYBOOLNET (Reachability) ===")
@@ -40,6 +40,9 @@ def main():
 
     print("\n=== MPBN (Reachability) ===")
     print(json.dumps(report_reach.get("mpbn", {}), indent=2))
+
+    print("\n=== PINT (Reachability) ===")
+    print(json.dumps(report_reach.get("pint", {}), indent=2))
 
 if __name__ == "__main__":
     main()

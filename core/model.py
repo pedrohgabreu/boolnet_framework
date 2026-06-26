@@ -85,3 +85,55 @@ class BooleanNetworkModel:
     def get_nodes(self):
         """Retorna a lista de todos os nós (genes/proteínas) presentes na rede."""
         return list(self.rules.keys())
+
+    def export_to_bnet(self, filepath: str) -> None:
+        """
+        Exporta a topologia e as regras booleanas do modelo atual 
+        para um arquivo de texto no formato padrão .bnet.
+        """
+        try:
+            with open(filepath, 'w') as f:
+                # O formato exige um cabeçalho ou simplesmente "alvo, regra"
+                for node, rule in self.rules.items():
+                    # Garante que a regra seja uma string limpa
+                    clean_rule = str(rule).strip()
+                    f.write(f"{node}, {clean_rule}\n")
+        except AttributeError:
+            raise Exception("O dicionário 'self.rules' não foi encontrado no modelo. Verifique o nome da variável que guarda as equações.")
+        except Exception as e:
+            raise Exception(f"Falha ao escrever o arquivo BNET: {str(e)}")  
+
+    def export_to_an(self, filepath: str) -> None:
+        """
+        Usa o exportador nativo do PyBoolNet para o formato do Pint.
+        Isso elimina erros de sintaxe manual e garante compatibilidade OCaml.
+        """
+        import os
+        from pyboolnet.file_exchange import bnet2primes, primes2pint
+        
+        tmp_bnet = "/tmp/temp_model.bnet"
+        
+        try:
+            # 1. Gera o BNET (já higienizado pelo seu sanitize original no __init__)
+            self.export_to_bnet(tmp_bnet)
+            
+            # 2. Converte BNET -> Primes (Estrutura interna)
+            primes = bnet2primes(tmp_bnet)
+            
+            # 3. Usa o exportador nativo do PyBoolNet para gerar o arquivo do Pint
+            # Ele já lida com os nomes dos nós, estados e regras automaticamente
+            primes2pint(primes, filepath)
+            
+        except Exception as e:
+            raise Exception(f"Falha na conversão via PyBoolNet: {str(e)}")
+        finally:
+            if os.path.exists(tmp_bnet):
+                os.remove(tmp_bnet)
+
+    def export_to_pint_format(self, filepath: str) -> None:
+        with open(filepath, 'w') as f:
+            # Linha 1: Lista de variáveis
+            f.write(",".join(self.rules.keys()) + "\n")
+            # Linhas seguintes: regras (sem operadores complexos, apenas nomes e valores)
+            for node, rule in self.rules.items():
+                f.write(f"{node} = {rule}\n")
