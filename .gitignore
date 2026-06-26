@@ -15,4 +15,5 @@ __pycache__/
 
 # Configurações de IDE (VS Code, etc)
 .vscode/
-.idea/
+.idea/*.zip
+*.zginml
